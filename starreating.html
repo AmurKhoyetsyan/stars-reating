@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style type="text/css">
+        .content-progress,
+        .content-progress * {
+            -webkit-box-sizing: border-box;
+            -moz-box-sizing: border-box;
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        .content-progress {
+            width: 100%;
+            max-width: 100px;
+            height: 20px;
+        }
+        .content-progress .waveform-bg {
+            -webkit-clip-path: url(#buckets);
+            clip-path: url(#buckets);
+            fill: #FFFFFF;
+        }
+
+        .content-progress .loader-progress {
+            -webkit-clip-path: url(#buckets);
+            clip-path: url(#buckets);
+        }
+
+        .waveform-bg {
+            cursor: pointer;
+        }
+
+        .mouse-over.overed {
+            cursor: pointer;
+            fill: rgb(255,200,0);
+        }
+    </style>
+</head>
+<body>
+<div style="width: 100%; display: flex; flex-direction: column; flex-wrap: nowrap">
+    <div class="content-progress">
+        <svg viewbox="0 0 100 20" class="waveform-container" preserveaspectratio="none" height="20" width="100%">
+            <rect class="waveform-bg" x="0" y="0" height="20" width="100%"/>
+            <rect id="loader-progress" class="loader-progress" x="0" y="0" height="20" width="50%" fill="rgb(255,200,0)" />
+        </svg>
+        <svg height="0" width="0">
+            <defs>
+                <clipPath id="buckets"></clipPath>
+            </defs>
+        </svg>
+    </div>
+</div>
+
+<script type="text/javascript">
+    ;(function(){
+        function polarToCartesian(centerX, centerY, radius, angleInDegrees) {
+            const angleInRadians = (angleInDegrees - 90) * Math.PI / 180.0;
+            return {
+                x: centerX + (radius * Math.cos(angleInRadians)),
+                y: centerY + (radius * Math.sin(angleInRadians))
+            };
+        }
+
+        function arc(x, y, radius, startAngle, endAngle, closeShape) {
+
+            const fullCircle = endAngle - startAngle === 360;
+            const start = polarToCartesian(x, y, radius, endAngle - (fullCircle ? 0.01 : 0));
+            const end = polarToCartesian(x, y, radius, startAngle);
+            const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+
+            const d = [
+                "M", start.x, start.y,
+                "A", radius, radius, 0, largeArcFlag, 0, end.x, end.y,
+                (closeShape && !fullCircle ? (`L ${x} ${y} Z`) : null),
+                (fullCircle && !closeShape ? 'Z' : null)
+            ].join(" ");
+            return d;
+        }
+
+        function pie(x, y, radius, startAngle, endAngle) {
+            return arc(x, y, radius, startAngle, endAngle, true);
+        }
+
+        function star(startX, startY, outerRadius = 10, points = 5) {
+            let innerRadius = (outerRadius * 40) / 100;
+            const degreeIncrement = 360 / (points * 2);
+            const d = new Array(points * 2).fill(0).map((p, i) => {
+                let radius = i % 2 == 0 ? outerRadius : innerRadius;
+                let degrees = degreeIncrement * i;
+                const point = polarToCartesian(startX, startY, radius, degrees);
+                return `${point.x},${point.y}`;
+            });
+            return `M${d}Z`;
+        }
+
+        let showPercent = 0;
+        let max = 95;
+        let container = document.querySelector('.waveform-container');
+        let mask = document.querySelector('#buckets');
+        let conWidth = container.clientWidth;
+
+        let count = 5;
+        let space = 4;
+        let width = conWidth / count;
+        let height = 28;
+
+        let buckets = [];
+
+        for (let i = 0; i < count; i++) {
+            buckets.push(i);
+        }
+
+        mask.innerHTML = buckets.map((bucket, index) => {
+            let positionX = index === 0 ? (index + 0.5) * 20 : index * 20;
+            let starPath = star((index + 0.5) * 20, 10, 10, 5);
+            return `<path d=${starPath} fill="rgba(255,200,0, 1)" />`;
+        }).join('');
+
+        container.innerHTML = container.innerHTML + buckets.map((bucket, index) => {
+            let positionX = index === 0 ? (index + 0.5) * 20 : index * 20;
+            let starPath = star((index + 0.5) * 20, 10, 10, 5);
+            return `<path d=${starPath} fill="none" stroke="rgba(0,0,0,1)" class="mouse-over" strokeWidth="2" data-index='${index}' />`;
+        }).join('');
+
+
+        let mouseOver = document.querySelectorAll('.mouse-over');
+
+        mouseOver.forEach((item, index) => {
+            item.onmouseover = function (event) {
+                for (let i = 0; i <= index; i++) {
+                    if (!mouseOver.item(i).classList.contains('overed')) {
+                        mouseOver.item(i).classList.add('overed');
+                    }
+                }
+            }
+
+            item.onmouseout = function (event) {
+                for (let i = 0; i <= index; i++) {
+                    if (mouseOver.item(i).classList.contains('overed')) {
+                        mouseOver.item(i).classList.remove('overed');
+                    }
+                }
+            }
+
+            item.onclick = function (event) {
+                console.log(index + 1);
+            }
+        });
+    })();
+</script>
+</body>
+</html>
