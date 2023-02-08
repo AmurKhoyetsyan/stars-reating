@@ -151,13 +151,28 @@
         return `M${d}Z`;
     }
 
+    StarReating.prototype.createSvg = function (item, index) {
+        // let circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+
+        let svgTop = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svgTop.setAttribute('height', 20);
+        svgTop.setAttribute('width', 100);
+        svgTop.setAttribute('preserveaspectratio', 'none');
+        svgTop.setAttribute('viewBox', '0 0 100 20');
+        svgTop.setAttribute('xmlns','http://www.w3.org/2000/svg');
+        svgTop.setAttribute('xmlns:xlink','http://www.w3.org/1999/xlink');
+
+        let contentStar = document.createElement('div');
+        contentStar.classList.add('arm-star-reting-content-star');
+    };
+
     StarReating.prototype.createStar = function () {
         let parents = document.querySelectorAll(this.parent);
 
         if (parents) {
             parents.forEach((item, index) => {
-                console.log(item);
-            })
+                this.createSvg(item, index);
+            });
         }
     };
 
