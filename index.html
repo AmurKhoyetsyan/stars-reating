@@ -17,7 +17,7 @@
     <div class="star-bar" arm-star-data-percent="37"></div>
     <script src="./js/reating-star.js" type="text/javascript"></script>
     <script type="text/javascript">
-        let star = new StarReating('.star-bar', {
+        StarReating.run('.star-bar', {
             width: 15,
             count: 5,
             strokeWidth: 1,
@@ -29,8 +29,6 @@
                 console.log('clicked', starIndex, index)
             }
         });
-
-        star.run();
     </script>
     </body>
 </html>
