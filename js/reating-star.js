@@ -25,6 +25,119 @@ const StarReating = function (parent, option) {
     }
 };
 
+StarReating.prototype.mutator = {
+    option: {
+        childList: true,
+        attributes: true,
+        characterData: true,
+        subtree: true
+    },
+    observer: null,
+    stars: null,
+    olderStars: []
+};
+
+StarReating.prototype.mutator.attrListString = function (attr) {
+    let str = "";
+    if (attr.length === 0) {
+        return str;
+    }
+
+    for (let item of attr) {
+        str += `${item.name}: ${item.value}; `;
+    }
+
+    return str.trim();
+};
+
+StarReating.prototype.mutator.equalsNode = function (node1, node2) {
+    let attr1 = node1.attributes;
+    let attr2 = node2.attributes;
+
+    let len1 = attr1.length;
+
+    if (len1 !== attr2.length) {
+        return false;
+    }
+
+    if (this.attrListString(attr1) !== this.attrListString(attr2)) {
+        return false;
+    }
+
+    return true;
+};
+
+StarReating.prototype.mutator.equals = function () {
+    this.stars = document.querySelectorAll(this.parent);
+
+    if (this.olderStars.length !== this.stars.length) {
+        return false;
+    }
+
+    for (let [index, item] of this.stars.entries()) {
+        if (!this.equalsNode(item, this.olderStars[index])) {
+            return false;
+        }
+    }
+
+    return true;
+};
+
+StarReating.prototype.mutator.removeAnotherStars = function (item) {
+    while (item.firstChild) {
+        item.removeChild(item.firstChild);
+    }
+};
+
+StarReating.prototype.mutator.disconnect = function () {
+    if (!this.observer) {
+        return false;
+    }
+
+    this.observer.disconnect();
+};
+
+StarReating.prototype.mutator.replaceStar = function () {
+    if (this.stars && !this.equals()) {
+        this.disconnect();
+        this.stars.forEach((item, index) => mutator.removeAnotherStars(item));
+        this.addStars();
+        this.start();
+    }
+};
+
+StarReating.prototype.mutator.cloneNodeList = function (nodeList) {
+    this.olderStars = [];
+    nodeList.forEach((item, index) => {
+        this.olderStars.push(item.cloneNode(true));
+    });
+};
+
+StarReating.prototype.mutator.addStars = function () {
+    let stars = document.querySelectorAll(this.parent);
+    this.stars = stars;
+    this.cloneNodeList(stars);
+};
+
+StarReating.prototype.mutator.connect = function () {
+    this.observer = new MutationObserver(this.replaceStar);
+};
+
+StarReating.prototype.mutator.start = function () {
+    if (!this.observer) {
+        this.connect();
+        this.addStars();
+    }
+
+    if (this.stars.length > 0) {
+        this.stars.forEach((item, index) => this.createSvg(item, index));
+    }
+
+    if (this.observer) {
+        this.observer.observe(document, this.option);
+    }
+};
+
 StarReating.prototype.createStyle = function () {
     let _self = this;
     let head = document.getElementsByTagName('head');
@@ -203,4 +316,5 @@ StarReating.prototype.createStar = function () {
 StarReating.prototype.run = function () {
     this.createStyle();
     this.createStar();
+    this.mutator.start();
 };
