@@ -9,16 +9,27 @@
 
 const StarReating = function (parent, option) {
     this.parent = parent;
-    this.option = option;
+    this.option = {
+        width: 20,
+        onclick: null,
+        count: 5,
+        stroke: 2,
+        points: 5
+    };
+
+    for (let key in option) {
+        this.option[key] = option[key];
+    }
 };
 
 StarReating.prototype.createStyle = function () {
+    let _self = this;
     let head = document.getElementsByTagName('head');
     let style = document.querySelector('style[arm-star-reting="true"]');
     if (head && !style) {
         let styles = document.createElement('style');
         styles.setAttribute('type', 'text/css');
-        styles.innerText = ".arm-star-reting-content-star:hover svg rect {display: none;} .arm-star-reting-content-star,.arm-star-reting-content-star *{-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box;margin:0;padding:0}.arm-star-reting-content-star{width:100%;max-width:100px;height:20px}.arm-star-reting-mouse-over{cursor:pointer;}.arm-star-reting-mouse-over.arm-star-overed{cursor:pointer;fill:rgb(255,200,0)}";
+        styles.innerText = `.arm-star-reting-content-star:hover svg rect {display: none;} .arm-star-reting-content-star,.arm-star-reting-content-star *{-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box;margin:0;padding:0}.arm-star-reting-content-star{width:${_self.option.width * _self.option.count}px;height:${_self.option.width}px}.arm-star-reting-mouse-over{cursor:pointer;}.arm-star-reting-mouse-over.arm-star-overed{cursor:pointer;fill:rgb(255,200,0)}`;
         head[0].appendChild(styles);
     }
 };
@@ -64,8 +75,9 @@ StarReating.prototype.star = function (startX, startY, outerRadius = 10, points 
 }
 
 StarReating.prototype.createSvg = function (item, index) {
+    let _self = this;
     let rectTop = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-    rectTop.setAttribute('height', 20);
+    rectTop.setAttribute('height', _self.option.width);
     rectTop.setAttribute('width', '100%');
     rectTop.setAttribute('x', 0);
     rectTop.setAttribute('y', 0);
@@ -74,7 +86,7 @@ StarReating.prototype.createSvg = function (item, index) {
     let percent = item.hasAttribute('arm-star-data-percent') ? parseFloat(item.getAttribute('arm-star-data-percent')) : 0;
 
     let rectBottom = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-    rectBottom.setAttribute('height', 20);
+    rectBottom.setAttribute('height', _self.option.width);
     rectBottom.setAttribute('width', `${percent}%`);
     rectBottom.setAttribute('x', 0);
     rectBottom.setAttribute('y', 0);
@@ -82,8 +94,8 @@ StarReating.prototype.createSvg = function (item, index) {
     rectBottom.setAttribute('fill', 'rgb(255,200,0)');
 
     let svgTop = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svgTop.setAttribute('viewBox', '0 0 100 20');
-    svgTop.setAttribute('height', 20);
+    svgTop.setAttribute('viewBox', `0 0 ${_self.option.width * _self.option.count} ${_self.option.width}`);
+    svgTop.setAttribute('height', _self.option.width);
     svgTop.setAttribute('width', '100%');
     svgTop.setAttribute('preserveaspectratio', 'none');
     svgTop.setAttribute('xmlns','http://www.w3.org/2000/svg');
@@ -112,10 +124,10 @@ StarReating.prototype.createSvg = function (item, index) {
 
     clipPath.setAttribute('id', `buckets${index}`);
 
-    let count = 5;
+    let count = _self.option.count;
     let space = 4;
-    let width = 100 / count;
-    let height = 28;
+    let width = _self.option.width;
+    let height = _self.option.width;
 
     let buckets = [];
 
@@ -126,17 +138,17 @@ StarReating.prototype.createSvg = function (item, index) {
     let mask = '';
 
     mask = mask + buckets.map((bucket, index) => {
-        let positionX = index === 0 ? (index + 0.5) * 20 : index * 20;
-        let starPath = this.star((index + 0.5) * 20, 10, 10, 5);
+        let positionX = index === 0 ? (index + 0.5) * _self.option.width : index * _self.option.width;
+        let starPath = _self.star((index + 0.5) * _self.option.width, _self.option.width / 2, _self.option.width / 2, _self.option.points);
         return `<path d=${starPath} fill="rgba(255,200,0, 1)" />`;
     }).join('');
 
     clipPath.innerHTML = mask;
 
     svgTop.innerHTML = svgTop.innerHTML + buckets.map((bucket, index) => {
-        let positionX = index === 0 ? (index + 0.5) * 20 : index * 20;
-        let starPath = this.star((index + 0.5) * 20, 10, 10, 5);
-        return `<path d=${starPath} fill="none" stroke="rgba(0,0,0,1)" class="arm-star-reting-mouse-over" strokeWidth="2" data-index='${index}' />`;
+        let positionX = index === 0 ? (index + 0.5) * _self.option.width : index * _self.option.width;
+        let starPath = _self.star((index + 0.5) * _self.option.width, _self.option.width / 2, _self.option.width / 2, _self.option.points);
+        return `<path d=${starPath} fill="none" stroke="rgba(0,0,0,1)" class="arm-star-reting-mouse-over" stroke-width="${_self.option.stroke}" data-index='${index}' />`;
     }).join('');
 
     defs.appendChild(clipPath);
@@ -149,16 +161,17 @@ StarReating.prototype.createSvg = function (item, index) {
 };
 
 StarReating.prototype.createStar = function () {
-    let parents = document.querySelectorAll(this.parent);
+    let _self = this;
+    let parents = document.querySelectorAll(_self.parent);
 
     if (parents) {
         parents.forEach((item, index) => {
-            this.createSvg(item, index);
+            _self.createSvg(item, index);
 
             let mouseOver = item.querySelectorAll('.arm-star-reting-mouse-over');
 
             mouseOver.forEach((starItem, starIndex) => {
-                starItem.onmouseover = function (event) {
+                starItem.onmouseover = (event) => {
                     for (let i = 0; i <= starIndex; i++) {
                         if (!mouseOver.item(i).classList.contains('arm-star-overed')) {
                             mouseOver.item(i).classList.add('arm-star-overed');
@@ -166,7 +179,7 @@ StarReating.prototype.createStar = function () {
                     }
                 }
 
-                starItem.onmouseout = function (event) {
+                starItem.onmouseout = (event) => {
                     for (let i = 0; i <= starIndex; i++) {
                         if (mouseOver.item(i).classList.contains('arm-star-overed')) {
                             mouseOver.item(i).classList.remove('arm-star-overed');
@@ -174,8 +187,10 @@ StarReating.prototype.createStar = function () {
                     }
                 }
 
-                starItem.onclick = function (event) {
-                    console.log(index + 1);
+                starItem.onclick = (event) => {
+                    if (_self.option.onclick !== null) {
+                        _self.option.onclick(starIndex, index);
+                    }
                 }
             });
         });
@@ -186,11 +201,3 @@ StarReating.prototype.run = function () {
     this.createStyle();
     this.createStar();
 };
-
-let star = new StarReating('.star-bar', {
-    onclick: function(json) {
-        console.log('clicked', json)
-    }
-});
-
-star.run();
