@@ -13,7 +13,10 @@ const StarReating = function (parent, option) {
         width: 20,
         onclick: null,
         count: 5,
-        stroke: 2,
+        strokeWidth: 2,
+        stroke: 'rgba(0,0,0,1)',
+        starColor: 'rgb(255,200,0)',
+        starEmptyColor: '#FFFFFF',
         points: 5
     };
 
@@ -29,7 +32,7 @@ StarReating.prototype.createStyle = function () {
     if (head && !style) {
         let styles = document.createElement('style');
         styles.setAttribute('type', 'text/css');
-        styles.innerText = `.arm-star-reting-content-star:hover svg rect {display: none;} .arm-star-reting-content-star,.arm-star-reting-content-star *{-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box;margin:0;padding:0}.arm-star-reting-content-star{width:${_self.option.width * _self.option.count}px;height:${_self.option.width}px}.arm-star-reting-mouse-over{cursor:pointer;}.arm-star-reting-mouse-over.arm-star-overed{cursor:pointer;fill:rgb(255,200,0)}`;
+        styles.innerText = `.arm-star-reting-content-star:hover svg rect {display: none;} .arm-star-reting-content-star,.arm-star-reting-content-star *{-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box;margin:0;padding:0}.arm-star-reting-content-star{width:${_self.option.width * _self.option.count}px;height:${_self.option.width}px}.arm-star-reting-mouse-over{cursor:pointer;}.arm-star-reting-mouse-over.arm-star-overed{cursor:pointer;fill:${_self.option.starColor}}`;
         head[0].appendChild(styles);
     }
 };
@@ -91,7 +94,7 @@ StarReating.prototype.createSvg = function (item, index) {
     rectBottom.setAttribute('x', 0);
     rectBottom.setAttribute('y', 0);
     rectBottom.setAttribute('class', `arm-star-reting-progress-star-${index}`);
-    rectBottom.setAttribute('fill', 'rgb(255,200,0)');
+    rectBottom.setAttribute('fill', _self.option.starColor);
 
     let svgTop = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svgTop.setAttribute('viewBox', `0 0 ${_self.option.width * _self.option.count} ${_self.option.width}`);
@@ -110,7 +113,7 @@ StarReating.prototype.createSvg = function (item, index) {
 
     let styles = document.createElement('style');
     styles.setAttribute('type', 'text/css');
-    styles.innerText = `.arm-star-reting-content-star .arm-star-reting-waveform-bg-${index} {-webkit-clip-path:url(#buckets${index});clip-path:url(#buckets${index});fill:#FFFFFF} .arm-star-reting-content-star .arm-star-reting-progress-star-${index} { -webkit-clip-path: url(#buckets${index}); clip-path: url(#buckets${index}); }`
+    styles.innerText = `.arm-star-reting-content-star .arm-star-reting-waveform-bg-${index} {-webkit-clip-path:url(#buckets${index});clip-path:url(#buckets${index});fill:${_self.option.starEmptyColor}} .arm-star-reting-content-star .arm-star-reting-progress-star-${index} { -webkit-clip-path: url(#buckets${index}); clip-path: url(#buckets${index}); }`
 
     let svgBottom = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svgBottom.setAttribute('height', 0);
@@ -140,7 +143,7 @@ StarReating.prototype.createSvg = function (item, index) {
     mask = mask + buckets.map((bucket, index) => {
         let positionX = index === 0 ? (index + 0.5) * _self.option.width : index * _self.option.width;
         let starPath = _self.star((index + 0.5) * _self.option.width, _self.option.width / 2, _self.option.width / 2, _self.option.points);
-        return `<path d=${starPath} fill="rgba(255,200,0, 1)" />`;
+        return `<path d=${starPath} fill="${_self.option.starColor}" />`;
     }).join('');
 
     clipPath.innerHTML = mask;
@@ -148,7 +151,7 @@ StarReating.prototype.createSvg = function (item, index) {
     svgTop.innerHTML = svgTop.innerHTML + buckets.map((bucket, index) => {
         let positionX = index === 0 ? (index + 0.5) * _self.option.width : index * _self.option.width;
         let starPath = _self.star((index + 0.5) * _self.option.width, _self.option.width / 2, _self.option.width / 2, _self.option.points);
-        return `<path d=${starPath} fill="none" stroke="rgba(0,0,0,1)" class="arm-star-reting-mouse-over" stroke-width="${_self.option.stroke}" data-index='${index}' />`;
+        return `<path d=${starPath} fill="none" stroke="${_self.option.stroke}" class="arm-star-reting-mouse-over" stroke-width="${_self.option.strokeWidth}" data-index='${index}' />`;
     }).join('');
 
     defs.appendChild(clipPath);
