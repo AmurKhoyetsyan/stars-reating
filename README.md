@@ -24,14 +24,14 @@ or
             <title>Document</title>
         </head>
         <body>
-            <div class="star-bar" arm-star-data-percent="50"></div>
-            <div class="star-bar" arm-star-data-percent="10"></div>
-            <div class="star-bar" arm-star-data-percent="25"></div>
-            <div class="star-bar" arm-star-data-percent="100"></div>
-            <div class="star-bar" arm-star-data-percent="71"></div>
-            <div class="star-bar" arm-star-data-percent="88"></div>
-            <div class="star-bar" arm-star-data-percent="37"></div>
-            <script src="./js/reating-star.js" type="text/javascript"></script>
+            <div class="star-bar" arm-star-data-percent="50" arm-star-is-hover=></div>
+            <div class="star-bar" arm-star-data-percent="10" arm-star-is-hover="false"></div>
+            <div class="star-bar" arm-star-data-percent="25" arm-star-is-hover="false"></div>
+            <div class="star-bar" arm-star-data-percent="100" arm-star-is-hover="true"></div>
+            <div class="star-bar" arm-star-data-percent="71" arm-star-is-hover="true"></div>
+            <div class="star-bar" arm-star-data-percent="88" arm-star-is-hover="true"></div>
+            <div class="star-bar" arm-star-data-percent="37" arm-star-is-hover="true"></div>
+            <script src="./js/reating-star.min.js" type="text/javascript"></script>
             <script type="text/javascript">
                 StarReating.run('.star-bar', {
                     width: 15,

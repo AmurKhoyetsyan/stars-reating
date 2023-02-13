@@ -13,6 +13,38 @@
      */
     const StarReating = {};
 
+    /**
+     * @param text
+     * @returns {boolean}
+     */
+    StarReating.toBoolean = text => text === "true";
+
+    /**
+     * @param str
+     * @returns {boolean}
+     */
+    StarReating.isEmpty = str => str.trim().length === 0;
+
+    /**
+     * @type {*[]}
+     */
+    StarReating.itemStarPosition = [];
+
+    StarReating.starPositionSet = function () {
+        let _self = this;
+
+        for (let index = 0; index < _self.option.count; index++) {
+            let positionX = index === 0 ? 0 : index * _self.option.width;
+
+            _self.itemStarPosition.push({
+                startX: positionX,
+                endX: positionX + _self.option.width,
+                startY: 0,
+                endY: _self.option.width
+            });
+        }
+    }
+
     StarReating.createStyle = function () {
         let _self = this;
         let head = document.getElementsByTagName('head');
@@ -20,7 +52,7 @@
         if (head && !style) {
             let styles = document.createElement('style');
             styles.setAttribute('type', 'text/css');
-            styles.innerText = `.arm-star-reting-content-star:hover svg rect {display: none;} .arm-star-reting-content-star,.arm-star-reting-content-star *{-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box;margin:0;padding:0}.arm-star-reting-content-star{width:${_self.option.width * _self.option.count}px;height:${_self.option.width}px}.arm-star-reting-mouse-over{cursor:pointer;}.arm-star-reting-mouse-over.arm-star-overed{cursor:pointer;fill:${_self.option.starColor}}`;
+            styles.innerText = `.arm-star-reting-content-star,.arm-star-reting-content-star *{-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box;margin:0;padding:0}.arm-star-reting-content-star{width:${_self.option.width * _self.option.count}px;height:${_self.option.width}px}.arm-star-reting-content-star.arm-star-is-hover{cursor: pointer;}.arm-star-reting-mouse-over.arm-star-overed{cursor:pointer;fill:${_self.option.starColor}}`;
             head[0].appendChild(styles);
         }
     };
@@ -97,6 +129,15 @@
 
     /**
      * @param item
+     * @returns {*}
+     */
+    StarReating.isHover = function (item) {
+        let isHover = item.hasAttribute('arm-star-is-hover') ? item.getAttribute('arm-star-is-hover') : false;
+        return this.isEmpty(isHover) ? false : this.toBoolean(isHover);
+    }
+
+    /**
+     * @param item
      * @param index
      */
     StarReating.createSvg = function (item, index) {
@@ -133,6 +174,12 @@
         let contentStar = document.createElement('div');
         contentStar.classList.add(`arm-star-reting-content-star`);
 
+        if (_self.isHover(item)) {
+            contentStar.classList.add(`arm-star-is-hover`);
+        }
+
+        contentStar.setAttribute('arm-star-data-backup-percent', percent);
+
         let styles = document.createElement('style');
         styles.setAttribute('type', 'text/css');
         styles.innerText = `.arm-star-reting-content-star .arm-star-reting-waveform-bg-${index} {-webkit-clip-path:url(#buckets${index});clip-path:url(#buckets${index});fill:${_self.option.starEmptyColor}} .arm-star-reting-content-star .arm-star-reting-progress-star-${index} { -webkit-clip-path: url(#buckets${index}); clip-path: url(#buckets${index}); }`
@@ -162,18 +209,18 @@
 
         let mask = '';
 
-        mask = mask + buckets.map((bucket, index) => {
-            let positionX = index === 0 ? (index + 0.5) * _self.option.width : index * _self.option.width;
-            let starPath = _self.star((index + 0.5) * _self.option.width, _self.option.width / 2, _self.option.width / 2, _self.option.points);
+        mask = mask + buckets.map((bucket, bucketIndex) => {
+            let positionX = bucketIndex === 0 ? 0 : bucketIndex * _self.option.width;
+            let starPath = _self.star((bucketIndex + 0.5) * _self.option.width, _self.option.width / 2, _self.option.width / 2, _self.option.points);
             return `<path d=${starPath} fill="${_self.option.starColor}" />`;
         }).join('');
 
         clipPath.innerHTML = mask;
 
-        svgTop.innerHTML = svgTop.innerHTML + buckets.map((bucket, index) => {
-            let positionX = index === 0 ? (index + 0.5) * _self.option.width : index * _self.option.width;
-            let starPath = _self.star((index + 0.5) * _self.option.width, _self.option.width / 2, _self.option.width / 2, _self.option.points);
-            return `<path d=${starPath} fill="none" stroke="${_self.option.stroke}" class="arm-star-reting-mouse-over" stroke-width="${_self.option.strokeWidth}" data-index='${index}' />`;
+        svgTop.innerHTML = svgTop.innerHTML + buckets.map((bucket, bucketIndex) => {
+            let positionX = bucketIndex === 0 ? 0 : bucketIndex * _self.option.width;
+            let starPath = _self.star((bucketIndex + 0.5) * _self.option.width, _self.option.width / 2, _self.option.width / 2, _self.option.points);
+            return `<path d=${starPath} fill="none" stroke="${_self.option.stroke}" class="arm-star-reting-mouse-over" stroke-width="${_self.option.strokeWidth}" data-index='${bucketIndex}' />`;
         }).join('');
 
         defs.appendChild(clipPath);
@@ -188,39 +235,73 @@
     /**
      * @param item
      * @param index
+     * @param callback
      */
-    StarReating.addFunctionalInRow = function (item, index) {
-        let _self = this;
-        let mouseOver = item.querySelectorAll('.arm-star-reting-mouse-over');
+    StarReating.getPositionCursorInItem = function (item, index, callback) {
+        document.addEventListener('mousemove', function (event) {
+            let position = item.getBoundingClientRect();
 
-        mouseOver.forEach((starItem, starIndex) => {
-            starItem.onmouseover = (event) => {
-                for (let i = 0; i <= starIndex; i++) {
-                    if (!mouseOver.item(i).classList.contains('arm-star-overed')) {
-                        mouseOver.item(i).classList.add('arm-star-overed');
-                    }
-                }
+            if ((event.clientY >= position.y && event.clientY <= position.y + position.height) && (event.clientX >= position.x && event.clientX <= position.x + position.width)) {
+                callback(true);
+            } else {
+                let rect = item.querySelector(`.arm-star-reting-progress-star-${index}`);
+                rect.setAttribute('width', item.getAttribute('arm-star-data-backup-percent') + '%');
             }
-
-            starItem.onmouseout = (event) => {
-                for (let i = 0; i <= starIndex; i++) {
-                    if (mouseOver.item(i).classList.contains('arm-star-overed')) {
-                        mouseOver.item(i).classList.remove('arm-star-overed');
-                    }
-                }
-            }
-
-            starItem.onclick = (event) => {
-                if (_self.option.onclick !== null) {
-                    _self.option.onclick(starIndex, index);
-                }
-            }
-        });
+        }, true);
     };
 
     /**
-     *
+     * @param item
+     * @param index
      */
+    StarReating.addFunctionalInRow = function (item, index) {
+        let _self = this;
+        
+        if (_self.isHover(item)) {
+            let mouseOver = item.querySelectorAll('.arm-star-reting-mouse-over');
+            let itemRowStars = item.querySelector('.arm-star-reting-content-star');
+
+            if (itemRowStars !== null) {
+                let rect = item.querySelector(`.arm-star-reting-progress-star-${index}`);
+
+                _self.getPositionCursorInItem(itemRowStars, index, function (bool) {
+                    let width = _self.option.count * _self.option.width;
+
+                    mouseOver.forEach((starItem, starIndex) => {
+                        starItem.onmouseover = function (event) {
+                            if (bool) {
+                                let starEnd = _self.itemStarPosition[starIndex].endX;
+                                let newPercent = (starEnd * 100) / width;
+
+                                rect.setAttribute('width', newPercent + '%');
+
+                                for (let i = 0; i <= starIndex; i++) {
+                                    if (!mouseOver.item(i).classList.contains('arm-star-overed')) {
+                                        mouseOver.item(i).classList.add('arm-star-overed');
+                                    }
+                                }
+                            }
+                        }
+
+                        starItem.onmouseout = (event) => {
+                            for (let i = 0; i <= starIndex; i++) {
+                                if (mouseOver.item(i).classList.contains('arm-star-overed')) {
+                                    mouseOver.item(i).classList.remove('arm-star-overed');
+                                }
+                            }
+                        }
+
+                        starItem.onclick = (event) => {
+                            if (_self.option.onclick !== null) {
+                                _self.option.onclick(starIndex, index);
+                            }
+                        }
+                    });
+                });
+            }
+        }
+    };
+
     StarReating.createStar = function () {
         let _self = this;
         let parents = document.querySelectorAll(_self.parent);
@@ -230,6 +311,8 @@
                 _self.createSvg(item, index);
                 _self.addFunctionalInRow(item, index);
             });
+
+            _self.starPositionSet();
         }
     };
 
@@ -301,6 +384,10 @@
     StarReating.mutator.equals = function () {
         this.stars = document.querySelectorAll(this.parent.parent);
 
+        if (this.stars === null) {
+            return false;
+        }
+
         if (this.olderStars.length !== this.stars.length) {
             return false;
         }
@@ -344,13 +431,13 @@
         });
     };
 
-    /**
-     *
-     */
     StarReating.mutator.addStars = function () {
         let stars = document.querySelectorAll(this.parent.parent);
-        this.stars = stars;
-        this.cloneNodeList(stars);
+
+        if (stars !== null) {
+            this.stars = stars;
+            this.cloneNodeList(stars);
+        }
     };
 
     StarReating.mutator.connect = function () {
@@ -366,20 +453,24 @@
     };
 
     StarReating.mutator.start = function () {
-        if (!this.observer) {
-            this.connect();
-            this.addStars();
+        let _self = this;
+
+        if (!_self.observer) {
+            _self.connect();
+            _self.addStars();
         }
 
-        if (this.stars.length > 0) {
-            this.stars.forEach((item, index) => {
-                this.parent.createSvg(item, index);
-                this.parent.addFunctionalInRow(item, index);
+        if (_self.stars.length > 0) {
+            _self.stars.forEach((item, index) => {
+                _self.parent.createSvg(item, index);
+                _self.parent.addFunctionalInRow(item, index);
             });
+
+            _self.parent.starPositionSet();
         }
 
-        if (this.observer) {
-            this.observer.observe(document, this.option);
+        if (_self.observer) {
+            _self.observer.observe(document, _self.option);
         }
     };
 
