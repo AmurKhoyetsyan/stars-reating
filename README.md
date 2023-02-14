@@ -1,5 +1,9 @@
 ## Reating Star
 
+[LICENSE](LICENSE)
+
+[View Demo](https://amurkhoyetsyan.github.io/stars-reating/)
+
 <br/>
 
 <img src="./src/stars-example.gif" title="stars example" />
