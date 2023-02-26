@@ -52,7 +52,7 @@
         if (head && !style) {
             let styles = document.createElement('style');
             styles.setAttribute('type', 'text/css');
-            styles.innerText = `.arm-star-reting-content-star,.arm-star-reting-content-star *{-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box;margin:0;padding:0}.arm-star-reting-content-star{width:${_self.option.width * _self.option.count}px;height:${_self.option.width}px}.arm-star-reting-content-star.arm-star-is-hover{cursor: pointer;}.arm-star-reting-mouse-over.arm-star-overed{cursor:pointer;fill:${_self.option.starColor}}`;
+            styles.innerText = `.arm-star-reting-content-star,.arm-star-reting-content-star *{-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box;margin:0;padding:0}.arm-star-reting-content-star{width:${_self.option.width * _self.option.count}px;height:${_self.option.width}px}.arm-star-reting-content-star.arm-star-is-hover{cursor: pointer;}`;
             head[0].appendChild(styles);
         }
     };
@@ -220,7 +220,7 @@
         svgTop.innerHTML = svgTop.innerHTML + buckets.map((bucket, bucketIndex) => {
             let positionX = bucketIndex === 0 ? 0 : bucketIndex * _self.option.width;
             let starPath = _self.star((bucketIndex + 0.5) * _self.option.width, _self.option.width / 2, _self.option.width / 2, _self.option.points);
-            return `<path d=${starPath} fill="none" stroke="${_self.option.stroke}" class="arm-star-reting-mouse-over" stroke-width="${_self.option.strokeWidth}" data-index='${bucketIndex}' />`;
+            return `<path d=${starPath} fill="none" stroke="${_self.option.stroke}" stroke-width="${_self.option.strokeWidth}" data-index='${bucketIndex}' />`;
         }).join('');
 
         defs.appendChild(clipPath);
@@ -238,14 +238,22 @@
      * @param callback
      */
     StarReating.getPositionCursorInItem = function (item, index, callback) {
+        let _self = this;
         document.addEventListener('mousemove', function (event) {
             let position = item.getBoundingClientRect();
 
             if ((event.clientY >= position.y && event.clientY <= position.y + position.height) && (event.clientX >= position.x && event.clientX <= position.x + position.width)) {
-                callback(true);
+                let cusrsorX = event.clientX - position.x;
+                let cursorIndex = Math.ceil(cusrsorX / _self.option.width);
+                let width = _self.option.count * _self.option.width;
+                let widthByCursor = cursorIndex * _self.option.width;
+
+                let percent = (widthByCursor * 100) / width;
+                callback(true, cursorIndex, percent);
             } else {
                 let rect = item.querySelector(`.arm-star-reting-progress-star-${index}`);
                 rect.setAttribute('width', item.getAttribute('arm-star-data-backup-percent') + '%');
+                callback(false);
             }
         }, true);
     };
@@ -258,45 +266,27 @@
         let _self = this;
         
         if (_self.isHover(item)) {
-            let mouseOver = item.querySelectorAll('.arm-star-reting-mouse-over');
             let itemRowStars = item.querySelector('.arm-star-reting-content-star');
 
             if (itemRowStars !== null) {
                 let rect = item.querySelector(`.arm-star-reting-progress-star-${index}`);
 
-                _self.getPositionCursorInItem(itemRowStars, index, function (bool) {
-                    let width = _self.option.count * _self.option.width;
-
-                    mouseOver.forEach((starItem, starIndex) => {
-                        starItem.onmouseover = function (event) {
-                            if (bool) {
-                                let starEnd = _self.itemStarPosition[starIndex].endX;
-                                let newPercent = (starEnd * 100) / width;
-
-                                rect.setAttribute('width', newPercent + '%');
-
-                                for (let i = 0; i <= starIndex; i++) {
-                                    if (!mouseOver.item(i).classList.contains('arm-star-overed')) {
-                                        mouseOver.item(i).classList.add('arm-star-overed');
-                                    }
-                                }
-                            }
+                _self.getPositionCursorInItem(itemRowStars, index, function (bool, staarIndex, percent) {
+                    itemRowStars.onmouseover = function (event) {
+                        event.stopPropagation();
+                        event.preventDefault();
+                        if (bool) {
+                            rect.setAttribute('width', percent + '%');
                         }
+                    }
 
-                        starItem.onmouseout = (event) => {
-                            for (let i = 0; i <= starIndex; i++) {
-                                if (mouseOver.item(i).classList.contains('arm-star-overed')) {
-                                    mouseOver.item(i).classList.remove('arm-star-overed');
-                                }
-                            }
+                    if (_self.option.onclick !== null) {
+                        itemRowStars.onclick = function (event) {
+                            event.stopPropagation();
+                            event.preventDefault();
+                            _self.option.onclick(staarIndex, index);
                         }
-
-                        starItem.onclick = (event) => {
-                            if (_self.option.onclick !== null) {
-                                _self.option.onclick(starIndex, index);
-                            }
-                        }
-                    });
+                    }
                 });
             }
         }
